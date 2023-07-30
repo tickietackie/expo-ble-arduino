@@ -20,7 +20,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 
-import * as ExpoDevice from "expo-device";
+import { requestPermissionOnAndroid } from "../../Permission";
 
 import { BleManager, Descriptor, Device } from "react-native-ble-plx";
 import base64 from "react-native-base64";
@@ -36,7 +36,6 @@ const getBleManager = () => {
 };
 
 const manager = getBleManager();
-// const manager? = new BleManager();
 
 const connectToDevice = (device: Device) => {
   manager?.stopDeviceScan(); // stop scanning
@@ -87,11 +86,6 @@ const ToggleArduinoLed = () => {
   const [arduinoFound, setArduinoFound] = useState<Device | null>(null);
   const [permissionGranted, setPermissionGranted] = useState(true);
 
-  // console.log("counter:")
-  // console.log(NativeModules.Counter)
-  // console.log(Torch)
-  // NativeModules.Counter.increment()
-
   React.useEffect(() => {
     console.log("use effect");
     manager?.onStateChange((state: any) => {
@@ -106,86 +100,16 @@ const ToggleArduinoLed = () => {
     });
   }, [manager]);
 
-  const getPermissionOnAndroid = async () => {
-    const granted = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-      {
-        title: "You need to allow location services to run this ...",
-        message: "This is mandatory",
-        buttonNeutral: "Ask Me Later",
-        buttonNegative: "I don't care",
-        buttonPositive: "Ok",
-      }
-    );
-    if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-      console.log("Permission granted");
-      setPermissionGranted(true);
-    } else {
-      console.log("permission denied");
-      setPermissionGranted(false);
-    }
-  };
-
-  const requestAndroid31Permissions = async () => {
-    const bluetoothScanPermission = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
-      {
-        title: "Location Permission",
-        message: "Bluetooth Low Energy requires Location",
-        buttonPositive: "OK",
-      }
-    );
-    const bluetoothConnectPermission = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
-      {
-        title: "Location Permission",
-        message: "Bluetooth Low Energy requires Location",
-        buttonPositive: "OK",
-      }
-    );
-    const fineLocationPermission = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-      {
-        title: "Location Permission",
-        message: "Bluetooth Low Energy requires Location",
-        buttonPositive: "OK",
-      }
-    );
-
-    return (
-      bluetoothScanPermission === "granted" &&
-      bluetoothConnectPermission === "granted" &&
-      fineLocationPermission === "granted"
-    );
-  };
-
-  const requestPermissionOnAndroid = async () => {
-    if (Platform.OS === "android") {
-      if ((ExpoDevice.platformApiLevel ?? -1) < 31) {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-          {
-            title: "Location Permission",
-            message: "Bluetooth Low Energy requires Location",
-            buttonPositive: "OK",
-          }
-        );
-        return granted === PermissionsAndroid.RESULTS.GRANTED;
-      } else {
-        const isAndroid31PermissionsGranted =
-          await requestAndroid31Permissions();
-
-        return isAndroid31PermissionsGranted;
-      }
-    } else {
-      return true;
-    }
-  };
-
   React.useEffect(() => {
     if (Platform.OS === "android") {
       (async () => {
-        await getPermissionOnAndroid();
+        if ((await requestPermissionOnAndroid()) === true) {
+          console.log("Permission granted");
+          setPermissionGranted(true);
+        } else {
+          console.log("permission denied");
+          setPermissionGranted(false);
+        }
       })();
     }
   }, []);
