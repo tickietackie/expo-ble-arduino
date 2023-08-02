@@ -16,19 +16,24 @@
 
   Adapted by Kai Kuklok to serve as an LED Peripheral simulation
 */
-#include "base64.hpp"
 #include <ArduinoBLE.h>
 
-BLEService ledService("e95dd91d-251d-470a-a062-fa1922dfa9a8"); // BLE LED Service
+#include "base64.hpp"
 
-// BLE LED Switch Characteristic - custom 128-bit UUID, read and writable by central
-BLEByteCharacteristic switchCharacteristic("7335164f-17ff-4845-8227-f9ef749c6891", BLERead | BLEWrite);
+BLEService ledService(
+    "e95dd91d-251d-470a-a062-fa1922dfa9a8");  // BLE LED Service
 
-const int ledPin = LED_BUILTIN; // pin to use for the LED
+// BLE LED Switch Characteristic - custom 128-bit UUID, read and writable by
+// central
+BLEByteCharacteristic switchCharacteristic(
+    "7335164f-17ff-4845-8227-f9ef749c6891", BLERead | BLEWrite);
+
+const int ledPin = LED_BUILTIN;  // pin to use for the LED
 
 void setup() {
   Serial.begin(9600);
-  while (!Serial);
+  while (!Serial)
+    ;
 
   // set LED pin to output mode
   pinMode(ledPin, OUTPUT);
@@ -37,7 +42,8 @@ void setup() {
   if (!BLE.begin()) {
     Serial.println("starting Bluetooth® Low Energy module failed!");
 
-    while (1);
+    while (1)
+      ;
   }
 
   // set advertised local name and service UUID:
@@ -51,7 +57,7 @@ void setup() {
   // add service
   BLE.addService(ledService);
 
-  // set the initial value for the characeristic:
+  // set the initial value for the characteristic:
   switchCharacteristic.writeValue((int)'0');
 
   // start advertising
@@ -66,9 +72,6 @@ void loop() {
 
   // if a central is connected to peripheral:
   if (central) {
-    unsigned char binary[2];
-    char  base64[100];
-    
     Serial.print("Connected to central: ");
     // print the central's MAC address:
     Serial.println(central.address());
@@ -78,16 +81,16 @@ void loop() {
       // if the remote device wrote to the characteristic,
       // use the value to control the LED:
       if (switchCharacteristic.written()) {
-
         Serial.println(switchCharacteristic.value());
         Serial.println((char)switchCharacteristic.value());
-        if (switchCharacteristic.value() != (int)'0')  {   // any value other than 0
+        if (switchCharacteristic.value() !=
+            (int)'0') {  // any value other than 0
           Serial.println("LED on");
-          digitalWrite(ledPin, HIGH);         // will turn the LED on
+          digitalWrite(ledPin, HIGH);  // will turn the LED on
           Serial.println(switchCharacteristic.value());
-        } else {                              // a 0 value
+        } else {  // a 0 value
           Serial.println(F("LED off"));
-          digitalWrite(ledPin, LOW);          // will turn the LED off
+          digitalWrite(ledPin, LOW);  // will turn the LED off
           Serial.println(switchCharacteristic.value());
         }
       }
